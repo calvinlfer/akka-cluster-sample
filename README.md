@@ -12,7 +12,8 @@ single cluster forms correctly.
 ## What does this project do?
 This project uses [ConstructR](https://github.com/hseeberger/constructr#constructr) backed by [ConstructR-ZooKeeper](https://github.com/typesafehub/constructr-zookeeper)
 in order to bootstrap the cluster i.e. discover existing seed nodes if they exist and ensure that new nodes join the
-existing cluster.
+existing cluster. Once the application is ready, Greeter Actors on all nodes will begin messaging Cluster Sharded 
+Member Actors so you can see some activity.
 
 ## Running the cluster
 In order to run the cluster, we make use of [Docker Compose](https://docs.docker.com/compose) and the 
