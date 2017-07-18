@@ -24,7 +24,7 @@ registry using `sbt docker:publishLocal` or using `./scripts/docker-image.sh`. O
 set of services (ZooKeeper and 3 clustered application nodes) that represent this application via `docker-compose up`.
 When you are satisfied, use `docker-compose down -v` to bring down the application.
 
-**Note**: If you want to run multiple clustered applications on your host machine, you will need to [change the default 
+**Note**: If you want to run multiple clustered applications directly on your host machine, you will need to [change the default 
 port Akka Cluster uses for gossip](http://doc.akka.io/docs/akka/2.5.2/java/cluster-usage.html#a-simple-cluster-example) 
 since all applications use the default port.
 
