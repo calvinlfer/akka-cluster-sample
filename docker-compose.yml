@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  zookeeper:
+    image: zookeeper:3.4.10
+    ports:
+      - "2181:2181" # in case you want to access ZooKeeper directly from your Docker host machine
+    container_name: service-discovery-zk
+
+  # Spin up a 3 node cluster
+  akka-cluster-sample-node-1:
+    # Build the docker image locally and publish it to your local Docker registry (see scripts/)
+    image: akka-cluster-sample:1.0
+    # Make use of container name DNS
+    environment:
+      - "ZK_IP=service-discovery-zk:2181"
+    depends_on:
+      - "zookeeper"
+
+  akka-cluster-sample-node-2:
+    image: akka-cluster-sample:1.0
+    environment:
+      - "ZK_IP=service-discovery-zk:2181"
+    depends_on:
+      - "zookeeper"
+
+  akka-cluster-sample-node-3:
+    image: akka-cluster-sample:1.0
+    environment:
+      - "ZK_IP=service-discovery-zk:2181"
+    depends_on:
+      - "zookeeper"
