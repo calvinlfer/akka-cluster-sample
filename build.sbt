@@ -68,6 +68,7 @@ libraryDependencies ++= {
     akka                        %% "akka-slf4j"                         % akkaV,
     "de.heikoseeberger"         %% "constructr"                         % "0.17.0",
     "com.lightbend.constructr"  %% "constructr-coordination-zookeeper"  % "0.3.3",
+    "org.scalatest"             %% "scalatest"                          % "3.0.3" % Test,
     "ch.qos.logback"             % "logback-classic"                    % "1.2.3",
     "org.codehaus.groovy"        % "groovy"                             % "2.4.12"
   )
