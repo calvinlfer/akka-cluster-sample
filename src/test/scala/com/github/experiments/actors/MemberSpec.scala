@@ -21,4 +21,6 @@ class MemberSpec extends TestKit(ActorSystem("member-test-system", ConfigFactory
       }
     }
   }
+
+  override def afterAll(): Unit = system.terminate()
 }
