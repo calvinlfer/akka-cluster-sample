@@ -8,5 +8,6 @@ appender(name="CONSOLE", clazz=ConsoleAppender) {
 }
 
 logger(name="akka", level=INFO)
+logger(name="com.github.experiments.actors", level=INFO)
 
 root(level=INFO, appenderNames=["CONSOLE"])
