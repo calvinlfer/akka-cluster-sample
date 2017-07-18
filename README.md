@@ -2,6 +2,8 @@
 _This is a demonstration of how to use ZooKeeper with the help of [ConstructR](https://github.com/hseeberger/constructr#constructr) 
 to bootstrap an Akka Cluster._
 
+[![Build Status](https://travis-ci.org/calvinlfer/akka-cluster-sample.svg?branch=master)](https://travis-ci.org/calvinlfer/akka-cluster-sample)
+
 ## Problem statement
 The process of discovering seed nodes and joining an existing cluster is a perilous journey especially in cloud 
 environments due to the ephemeral nature of instances. You can get into situations where you form two or more clusters
