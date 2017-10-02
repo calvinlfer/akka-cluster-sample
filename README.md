@@ -1,6 +1,5 @@
 # Akka Cluster Sample (using ConstructR with ZooKeeper)
-_This is a demonstration of how to use ZooKeeper with the help of [ConstructR](https://github.com/hseeberger/constructr#constructr) 
-to bootstrap an Akka Cluster._
+_This is a demonstration of how to use Docker Swarm to bootstrap an Akka Cluster._
 
 [![Build Status](https://travis-ci.org/calvinlfer/akka-cluster-sample.svg?branch=master)](https://travis-ci.org/calvinlfer/akka-cluster-sample)
 
@@ -9,32 +8,63 @@ The process of discovering seed nodes and joining an existing cluster is a peril
 environments due to the ephemeral nature of instances. You can get into situations where you form two or more clusters
 if you incorrectly detect that no seed nodes are up causing massive problems for your data. Thankfully, service discovery 
 mechanisms like Consul, etcd and ZooKeeper are there to help find out if existing seed nodes exist and ensure that a 
-single cluster forms correctly.
+single cluster forms correctly. However, now service orchestration mechanisms are becoming increasingly intelligent and
+allow us to utilize their native features (e.g. Docker Swarm and Kubernetes) to avoid using a separate coordination 
+service in order to discover seed nodes.
 
 ## What does this project do?
-This project uses [ConstructR](https://github.com/hseeberger/constructr#constructr) backed by [ConstructR-ZooKeeper](https://github.com/typesafehub/constructr-zookeeper)
-in order to bootstrap the cluster i.e. discover existing seed nodes if they exist and ensure that new nodes join the
-existing cluster. Once the application is ready, Greeter Actors on all nodes will begin messaging Cluster Sharded 
-Member Actors so you can see some activity.
+This project utilizes Docker Swarm services, overlay networks and stacks in order to deploy a highly-available and 
+resilient Akka Cluster. 
 
-## Running the cluster
-In order to run the cluster, we make use of [Docker Compose](https://docs.docker.com/compose) and the 
-[SBT Native Packager](https://github.com/sbt/sbt-native-packager). First, create a Docker image in your local Docker 
-registry using `sbt docker:publishLocal` or using `./scripts/docker-image.sh`. Once this has been complete, spin up the 
-set of services (ZooKeeper and 3 clustered application nodes) that represent this application via `docker-compose up`.
-When you are satisfied, use `docker-compose down -v` to bring down the application.
+## Running the cluster on Swarm
+Simply hop onto any manager node in the Swarm and copy the `docker-compose.yaml` to that machine. Then create a stack
+```bash
+docker stack deploy -c docker-compose.yaml <<your-stack-name>>
+```
 
-**Note**: If you want to run multiple clustered applications directly on your host machine, you will need to [change the default 
-port Akka Cluster uses for gossip](http://doc.akka.io/docs/akka/2.5.2/java/cluster-usage.html#a-simple-cluster-example) 
-since all applications use the default port.
+This will create the necessary services and overlay networks on the Swarm to run the application
 
-### Under the hood
-Using Docker Compose means that a Docker network is created and containers are automatically placed into this network. 
-This means that the containers are free to communicate with each other. We make the Akka Cluster applications talk to 
-ZooKeeper by using the Container DNS mechanism offered by Docker. The Akka Cluster applications will use ZooKeeper 
-(via ConstructR) to discover the seed nodes and join the same cluster and will communicate with each other. 
+## Running locally using Docker Compose
+The nice part about using Docker Swarm is that it plays well with Docker Compose on your local machine. You can run all
+the containers locally using
+```bash
+docker-compose up 
+```
 
+## Under the hood
+We make use of 3 services:
+- application-seed-1: the first seed node with a replication of 1
+- application-seed-2: the second seed node with a replication of 1
+- application: the application that relies on the above seed nodes for cluster bootstrapping with a replication of N 
+  where N is odd
 
-**Note**: This does not take care of Split Brain Resolution, this takes care of bootstrapping a cluster. If you are 
-looking for an open-source Split Brain Resolver then see [akka-batteries](https://github.com/PaytmLabs/akka-batteries#role-based-split-brain-resolver) 
-for an excellent example and also refer to Niko Will's [talk](https://www.youtube.com/watch?v=ke9r0yQnaqA).
+We make use of 2 seed nodes because in case one of the seed nodes go down, it can rely on the other seed node to re-join
+the already existing cluster. If we used one seed node, we would not be able to re-join the cluster as the Session ID 
+would be different.
+
+This architecture relies on the fact that all seed nodes cannot go down. If this were to happen (all seed nodes do go 
+down but the normal nodes remain in the formed cluster) then the seed nodes would not be able to join the already 
+formed cluster then when the seed nodes came back up, they would begin to form a new cluster thereby causing split brain.
+As you can tell, the more seed node services you have, the higher the guarantee of being able to lose seed nodes and 
+having them re-join the cluster without causing split brain to occur. Here we use 2 for illustration purposes but 3 or 5
+would be a better number. The more of these services you have, the bigger the docker-compose.yaml becomes.
+
+### Resiliency
+Resiliency testing has been done on a 3 node Docker Swarm cluster in AWS. First, the stack was deployed using 
+`docker stack deploy -c docker-compose.yaml test-stack`. You can start to identify containers by drilling down into
+the stack using `docker stack ps test-stack` and finding the services that make up the stack. Once you find the 
+services, you can use `docker service ps <service-name>` to find out which nodes are hosting the tasks of interest.
+Once the seed node service tasks have been discovered (i.e. which node in the Swarm they are running on), we hop into 
+those machines and do a `docker container ls` to find out the container ID. Then we `docker rm -f <container-id-of-seed>`
+to forcefully terminate and remove them from the Akka cluster. Doing this will cause the Split Brain Resolver to take 
+effect and begin removing them. In addition to this, the Docker Swarm orchestrator will realize there is a mismatch 
+between our desired state and the running state and re-deploy another task to make up for the container we terminated.
+Viewing the logs of that newly brought up container, we see that it successfully joins the Akka cluster using 
+`docker container logs <container-id>`, you can add on `| grep Younger` to ensure that it joins the existing Akka 
+cluster and that it is not the oldest node in the cluster for the Shard coordinator. This shows that the application can
+sustain the loss of a single seed node and that it can heal automatically without intervention. You can freely kill any
+of the tasks in the `application` service and they will also come back up and join the cluster using the tasks in the
+seed services. 
+
+**Note**: This project takes care of split brain resolution (keep-majority style) and bootstrapping a cluster. We use an 
+open-source Split Brain Resolver from [akka-batteries](https://github.com/PaytmLabs/akka-batteries#role-based-split-brain-resolver).
