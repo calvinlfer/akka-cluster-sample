@@ -1,32 +1,57 @@
-version: '3'
+version: '3.1'
 
+# Build the docker image locally and publish it to your local Docker registry (see scripts/)
 services:
-  zookeeper:
-    image: zookeeper:3.4.10
-    ports:
-      - "2181:2181" # in case you want to access ZooKeeper directly from your Docker host machine
-    container_name: service-discovery-zk
-
-  # Spin up a 3 node cluster
-  akka-cluster-sample-node-1:
-    # Build the docker image locally and publish it to your local Docker registry (see scripts/)
-    image: akka-cluster-sample:1.0
-    # Make use of container name DNS
+  # Seed nodes starts up and join itself and other seed nodes
+  # This must always have a replication of 1 and no more otherwise you will cause a split-brain scenario
+  application-seed-1:
+    image:  rubixcubin/akka-cluster-sample:1.5
     environment:
-      - "ZK_IP=service-discovery-zk:2181"
-    depends_on:
-      - "zookeeper"
-
-  akka-cluster-sample-node-2:
-    image: akka-cluster-sample:1.0
+      PUBLISH_HOST: application-seed-1
+      PUBLISH_PORT: 2551
+      SEED_NODE_1: akka.tcp://akka-cluster-sample@application-seed-1:2551
+      SEED_NODE_2: akka.tcp://akka-cluster-sample@application-seed-2:2551
+    networks:
+      - akka-cluster
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+  application-seed-2:
+    image:  rubixcubin/akka-cluster-sample:1.5
     environment:
-      - "ZK_IP=service-discovery-zk:2181"
-    depends_on:
-      - "zookeeper"
+      PUBLISH_HOST: application-seed-2
+      PUBLISH_PORT: 2551
+      SEED_NODE_1: akka.tcp://akka-cluster-sample@application-seed-1:2551
+      SEED_NODE_2: akka.tcp://akka-cluster-sample@application-seed-2:2551
+    networks:
+      - akka-cluster
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
 
-  akka-cluster-sample-node-3:
-    image: akka-cluster-sample:1.0
+  # Other nodes always join the seed node on startup
+  application:
+    image: rubixcubin/akka-cluster-sample:1.5
     environment:
-      - "ZK_IP=service-discovery-zk:2181"
+      SEED_NODE_1: akka.tcp://akka-cluster-sample@application-seed-1:2551
+      SEED_NODE_2: akka.tcp://akka-cluster-sample@application-seed-2:2551
+    networks:
+      - akka-cluster
     depends_on:
-      - "zookeeper"
+      - application-seed-1
+      - application-seed-2
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: any
+        delay: 20s
+      update_config:
+        parallelism: 1
+        delay: 10s
+
+networks:
+  akka-cluster:

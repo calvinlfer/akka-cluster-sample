@@ -1,8 +1,8 @@
 name := "akka-cluster-sample"
 
-version := "1.0"
+version := "1.5"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.3"
 
 scalacOptions ++= Seq(
   "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
@@ -14,7 +14,6 @@ scalacOptions ++= Seq(
   "-language:higherKinds",             // Allow higher-kinded types
   "-language:implicitConversions",     // Allow definition of implicit functions called views
   "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
-  "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
   "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
   "-Xfuture",                          // Turn on future language features.
   "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
@@ -57,7 +56,7 @@ resolvers += Resolver.bintrayRepo("hseeberger", "maven")
 
 libraryDependencies ++= {
   val akka = "com.typesafe.akka"
-  val akkaV = "2.5.3"
+  val akkaV = "2.5.6"
 
   Seq(
     akka                        %% "akka-actor"                         % akkaV,
@@ -66,12 +65,12 @@ libraryDependencies ++= {
     akka                        %% "akka-cluster-sharding"              % akkaV,
     akka                        %% "akka-distributed-data"              % akkaV,
     akka                        %% "akka-slf4j"                         % akkaV,
-    "de.heikoseeberger"         %% "constructr"                         % "0.17.0",
-    "com.lightbend.constructr"  %% "constructr-coordination-zookeeper"  % "0.3.3",
     "org.scalatest"             %% "scalatest"                          % "3.0.3" % Test,
     "ch.qos.logback"             % "logback-classic"                    % "1.2.3",
     "org.codehaus.groovy"        % "groovy"                             % "2.4.12"
   )
 }
 
+dockerRepository := Some("rubixcubin")
 dockerBaseImage := "anapsix/alpine-java:latest"
+dockerUpdateLatest := true

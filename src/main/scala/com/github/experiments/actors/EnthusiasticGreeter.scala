@@ -17,7 +17,7 @@ class EnthusiasticGreeter(memberRegion: ActorRef) extends Actor with ActorLoggin
     val random = new scala.util.Random()
     context.system.scheduler.schedule(
       initialDelay = 2.seconds,
-      interval = 2.seconds,
+      interval = 10.seconds,
       receiver = memberRegion,
       message = EntityEnvelope(random.nextString(5), SayHello)
     )
