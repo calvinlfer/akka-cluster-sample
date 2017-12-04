@@ -38,3 +38,7 @@ ZooKeeper by using the Container DNS mechanism offered by Docker. The Akka Clust
 **Note**: This does not take care of Split Brain Resolution, this takes care of bootstrapping a cluster. If you are 
 looking for an open-source Split Brain Resolver then see [akka-batteries](https://github.com/PaytmLabs/akka-batteries#role-based-split-brain-resolver) 
 for an excellent example and also refer to Niko Will's [talk](https://www.youtube.com/watch?v=ke9r0yQnaqA).
+
+## Where to go next
+- See a more [detailed example](https://github.com/LoyaltyOne/theatre-booking-akka-example)
+- A detailed [blog post](https://medium.com/@ukayani/deploying-clustered-akka-applications-on-amazon-ecs-fbcca762a44c) of the entire process
