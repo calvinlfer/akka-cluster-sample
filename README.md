@@ -41,4 +41,5 @@ for an excellent example and also refer to Niko Will's [talk](https://www.youtub
 
 ## Where to go next
 - See a more [detailed example](https://github.com/LoyaltyOne/theatre-booking-akka-example)
+- A [talk](https://youtu.be/EPNBF5PXb84) we did that goes through all the problems we encountered and how we solved them
 - A detailed [blog post](https://medium.com/@ukayani/deploying-clustered-akka-applications-on-amazon-ecs-fbcca762a44c) of the entire process
